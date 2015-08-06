@@ -19,14 +19,17 @@ To get a list of Phing targets run `sudo phing -l`.  This will list all the main
 
 ###Run the build on one of your environments###
 To run the build process on local, test or live, run one of the following, respectively.
-`sudo phing build-local`
-`sudo phing build-test`
-`sudo phing build-live`
+
+```
+sudo phing build-local
+sudo phing build-test
+sudo phing build-live
+```
 
 ###RSYNC###
 This set up comes with a target to rsync non-versioned files between environments.
 NOTE: You must be SSH'd into one of the environments you with to rsync to/from.  For instance if you are on local, you cannot rsync between test and live.  You would need to SSH to either test or live first.
-1. cd to the project root (where your build.xml file is)
-2. run `phing rsync`
-3. follow the prompts in terminal to complete the process.
+ 1. cd to the project root (where your build.xml file is)
+ 2. run `phing rsync`
+ 3. follow the prompts in terminal to complete the process.
 
