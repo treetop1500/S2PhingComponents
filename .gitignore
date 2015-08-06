@@ -1,0 +1,5 @@
+# PHP Storm
+.idea/*
+
+# MISC SYSTEM FILES
+*.DS_Store

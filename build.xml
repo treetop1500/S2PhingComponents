@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="usage" name="${project.name}">
+    <property file="build.properties" />
+
+    <!-- USAGE (displays usage message and exits) -->
+    <target name="usage">
+        <echo msg="No build procedure specified. Type 'phing -l' to list available targets in this project."
+              level="error" />
+    </target>
+
+    <!-- BUILD-LOCAL-->
+    <target name="build-local" description="Main build process for a local environment. Run only in local.">
+        <property name="buildType" value="local" />
+        <property name="user" value="${local.user}" />
+        <property name="group" value="${local.group}" />
+        <property name="targetDir" value="${local.targetDir}" />
+        <property name="apacheUser" value="${local.apacheUser}" />
+        <property name="db.host" value="${local.db.host}" />
+        <property name="db.name" value="${local.db.name}" />
+        <property name="db.user" value="${local.db.user}" />
+        <property name="db.pass" value="${local.db.pass}" />
+        <phingcall target="enter-maintenance-mode" />
+        <phingcall target="config-setup" />
+        <phingcall target="clear-cache" />
+        <phingcall target="set-permissions" />
+        <phingcall target="compile-sass" />
+        <phingcall target="exit-maintenance-mode" />
+    </target>
+
+    <!-- BUILD-TEST -->
+    <target name="build-test" description="Main build process for the test environment. Run only in test.">
+        <property name="buildType" value="test" />
+        <property name="user" value="${test.user}" />
+        <property name="group" value="${test.group}" />
+        <property name="targetDir" value="${test.targetDir}" />
+        <property name="apacheUser" value="${test.apacheUser}" />
+        <property name="db.host" value="${test.db.host}" />
+        <property name="db.name" value="${test.db.name}" />
+        <property name="db.user" value="${test.db.user}" />
+        <property name="db.pass" value="${test.db.pass}" />
+        <phingcall target="enter-maintenance-mode" />
+        <phingcall target="run-composer-install" />
+        <phingcall target="config-setup" />
+        <phingcall target="clear-cache" />
+        <phingcall target="set-permissions" />
+        <phingcall target="compile-sass" />
+        <phingcall target="exit-maintenance-mode" />
+    </target>
+
+    <!-- BUILD-LIVE -->
+    <target name="build-live" description="Main build process for the live environment. Run only in live.">
+        <property name="buildType" value="live" />
+        <property name="user" value="${live.user}" />
+        <property name="group" value="${live.group}" />
+        <property name="targetDir" value="${live.targetDir}" />
+        <property name="apacheUser" value="${live.apacheUser}" />
+        <property name="db.host" value="${live.db.host}" />
+        <property name="db.name" value="${live.db.name}" />
+        <property name="db.user" value="${live.db.user}" />
+        <property name="db.pass" value="${live.db.pass}" />
+        <phingcall target="enter-maintenance-mode" />
+        <phingcall target="run-composer-install" />
+        <phingcall target="config-setup" />
+        <phingcall target="clear-cache" />
+        <phingcall target="set-permissions" />
+        <phingcall target="compile-sass" />
+        <phingcall target="exit-maintenance-mode" />
+    </target>
+
+    <!-- CONFIG-SETUP (Use this target to modify the contents of config files based on where they are deployed) -->
+    <target name="config-setup" description="">
+        <!-- configure database connections -->
+        <echo msg="change database connection values in the parameters.yml file" />
+        <reflexive file="${targetDir}/${project.app_dir}/config/parameters.yml">
+            <filterchain>
+                <replaceregexp>
+                    <regexp pattern="database_name:\s*(.*)" replace="database_name: ${db.name}" modifiers="im" />
+                    <regexp pattern="database_host:\s*(.*)" replace="database_host: ${db.host}" modifiers="im" />
+                    <regexp pattern="database_user:\s*(.*)" replace="database_user: ${db.user}" modifiers="im" />
+                    <regexp pattern="database_password:\s*(.*)" replace="database_password: ${db.pass}" modifiers="im" />
+                </replaceregexp>
+            </filterchain>
+        </reflexive>
+        <!-- configure password protection for the test environment -->
+        <If>
+            <equals arg1="${buildType}" arg2="test" />
+            <then>
+                <echo msg="change .htaccess file to enable password protection" />
+                <reflexive file="${targetDir}/${project.web_root}/.htaccess">
+                    <filterchain>
+                        <replaceregexp>
+                            <regexp pattern="^#require\s*valid-user" replace="require valid-user" modifiers="im" />
+                        </replaceregexp>
+                    </filterchain>
+                </reflexive>
+            </then>
+            <!-- remove password protection for other environments -->
+            <else>
+                <echo msg="change .htaccess file to disable password protection" />
+                <reflexive file="${targetDir}/${project.web_root}/.htaccess">
+                    <filterchain>
+                        <replaceregexp>
+                            <regexp pattern="^require\s*valid-user" replace="#require valid-user" modifiers="im" />
+                        </replaceregexp>
+                    </filterchain>
+                </reflexive>
+            </else>
+        </If>
+    </target>
+
+    <!-- SET-PERMISSIONS (Set file/directory permissions and ownership) -->
+    <target name="set-permissions">
+        <if>
+            <not>
+                <equals arg1="${buildType}" arg2="local" />
+            </not>
+            <then>
+                <!-- change owner & group of all files and directories -->
+                <echo msg="change owner.group of all files/directories inside of ${targetDir}" />
+                <exec command="sudo chown -R ${user}.${group} ${targetDir}" passthru="true" />
+                <exec command="sudo find ${targetDir} | xargs -0 chown -R ${user}.${group} \;" passthru="true" />
+            </then>
+        </if>
+        <!-- change permissions of all directories to 2775 -->
+        <echo msg="change permissions of all directories to 2775" level="warning" />
+        <exec command="sudo find ${targetDir} -type d -print0 | xargs -0 chmod 2775 \;" passthru="true" />
+        <!-- change permissions of all files to 0664 -->
+        <echo msg="change permissions of all files to 0664" level="warning" />
+        <exec command="sudo find ${targetDir} -type f -print0 | xargs -0 chmod 664 \;" passthru="true" />
+
+        <!-- For Symfony Sites: public_html/sites/default/files -->
+        <echo msg="make writable: /var" level="warning" />
+        <exec command="sudo find ${targetDir}/public_html/var -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
+
+        <echo msg="make writable: /web/uploads" level="warning" />
+        <exec command="sudo find ${targetDir}/${project.web_root}/uploads -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
+
+        <echo msg="make writable: /web/media" level="warning" />
+        <exec command="sudo find ${targetDir}/${project.web_root}/media -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
+
+        <echo msg="warm up the cache" level="warning" />
+        <exec command="php ${targetDir}/${project.bin_dir}/console cache:warmup --no-debug" passthru="true" />
+
+    </target>
+
+    <!-- CLEAR-CACHE -->
+    <target name="clear-cache" description="Clears various caches">
+        <!-- Symfony: clear cache  -->
+        <echo msg="clearing symfony cache" level="warning" />
+        <exec command="sudo rm -rf ${targetDir}/public_html/var/cache/*" passthru="true" />
+        <exec command="sudo rm -rf ${targetDir}/public_html/var/logs/*" passthru="true" />
+        <exec command="sudo rm -rf ${targetDir}/public_html/cache/logs/*" passthru="true" />
+        <exec command="sudo rm -rf ${targetDir}/${project.app_dir}/logs/*" passthru="true" />
+
+        <!-- clear varnish cache -->
+        <If>
+            <equals arg1="${buildType}" arg2="live" />
+            <then>
+                <echo msg="clearing varnish cache" level="warning" />
+                <exec command="sudo service varnish restart" passthru="true" />
+            </then>
+        </If>
+    </target>
+
+    <!-- Install PHP DEPENDENCIES WITH COMPOSER -->
+    <target name="run-composer-install" description="Runs the composer install script.">
+        <echo msg="Installing PHP vendors and dependencies with Composer" level="warning" />
+        <exec command="composer install -o" dir="public_html" />
+    </target>
+
+    <target name="compile-sass" description="Compiles CSS from SASS/SCSS files.">
+        <If>
+            <equals arg1="${project.sass_compiler}" arg2="gulp" />
+            <then>
+                <!-- Compile SASS with Gulp -->
+                <echo msg="Compiling SASS files with Gulp" level="warning" />
+                <exec command="gulp styles" dir="${targetDir}/${project.web_root}" passthru="true" />
+            </then>
+            <else>
+                <!-- Compile SASS with Compass -->
+                <echo msg="Compiling SASS files with Compass" level="warning" />
+                <exec command="compass clean" dir="${targetDir}/${project.web_root}" passthru="true" />
+                <exec command="bundle exec compass compile -e production" dir="${targetDir}/${project.web_root}" passthru="true" />
+            </else>
+        </If>
+    </target>
+
+
+    <!-- RSYNC Utilities -->
+    <target name="rsync" description="rsyncs uploads and public bundle assets across local, test, and live environments.">
+        <input propertyName="user" defaultValue="rwade" message="Username: " validArgs="${project.rsync_users}" />
+        <property name="localDir" value="${local.targetDir}/${project.web_root}" />
+        <property name="testDir" value="${user}@${test.server}:${test.targetDir}/${project.web_root}" />
+        <property name="liveDir" value="${user}@${live.server}:${live.targetDir}/${project.web_root}" />
+
+        <input propertyName="from" defaultValue="grayloon" message="from: " validArgs="local,test,live" />
+
+        <If>
+            <equals arg1="${from}" arg2="local" />
+            <then>
+                <property name="toArgs" value="test,live" />
+                <property name="fromDir1" value="${localDir}/uploads" />
+                <property name="fromDir2" value="${localDir}/bundles" />
+            </then>
+        </If>
+        <If>
+            <equals arg1="${from}" arg2="test" />
+            <then>
+                <property name="toArgs" value="local,live" />
+                <property name="fromDir1" value="${testDir}/uploads" />
+                <property name="fromDir2" value="${testDir}/bundles" />
+            </then>
+        </If>
+        <If>
+            <equals arg1="${from}" arg2="live" />
+            <then>
+                <property name="toArgs" value="local,test" />
+                <property name="fromDir1" value="${liveDir}/uploads" />
+                <property name="fromDir2" value="${liveDir}/bundles" />
+            </then>
+        </If>
+        <input propertyName="to" defaultValue="grayloon" message="to: " validArgs="${toArgs}" />
+
+        <If>
+            <equals arg1="${to}" arg2="local" />
+            <then>
+                <property name="toDir" value="${localDir}/" />
+            </then>
+        </If>
+        <If>
+            <equals arg1="${to}" arg2="test" />
+            <then>
+                <property name="toDir" value="${testDir}/" />
+            </then>
+        </If>
+        <If>
+            <equals arg1="${to}" arg2="live" />
+            <then>
+                <property name="toDir" value="${liveDir}/" />
+            </then>
+        </If>
+
+        <echo msg="RUNNING: rsync -avz ${fromDir1} ${toDir} --progress" level="warning" />
+        <exec command="rsync -avz ${fromDir1} ${toDir} --progress" passthru="true" />
+        <echo msg="RUNNING: rsync -avz ${fromDir2} ${toDir} --progress" level="warning" />
+        <exec command="rsync -avz ${fromDir2} ${toDir} --progress" passthru="true" />
+    </target>
+
+
+    <!-- Enter Maintenance Mode -->
+    <target name="enter-maintenance-mode" description="Puts the site into Maintenance Mode.">
+        <!-- configure database connections -->
+        <echo msg="Entering Maintenance Mode..." />
+        <reflexive file="${project.app_dir}/config/parameters.yml">
+            <filterchain>
+                <replaceregexp>
+                    <regexp pattern="^(\s*)(maintenance:)(\s*)(false)$" replace="\1\2\3true" modifiers="im" />
+                </replaceregexp>
+            </filterchain>
+        </reflexive>
+        <phingcall target="clear-cache" />
+    </target>
+
+    <!-- Exit Maintenance Mode -->
+    <target name="exit-maintenance-mode" description="Exits Maintenance Mode.">
+        <!-- configure database connections -->
+        <echo msg="Exiting Maintenance Mode..." />
+        <reflexive file="${project.app_dir}/config/parameters.yml">
+            <filterchain>
+                <replaceregexp>
+                    <regexp pattern="^(\s*)(maintenance:)(\s*)(true)$" replace="\1\2\3false" modifiers="im" />
+                </replaceregexp>
+            </filterchain>
+        </reflexive>
+        <phingcall target="clear-cache" />
+    </target>
+</project>
