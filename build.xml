@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ###########################################
+S2PhingComponents build.xml
+v1.0.0
+Author: rwade@grayloon.com
+https://github.com/treetop1500/S2PhingComponents
+################################################ -->
+
 <project default="usage" name="${project.name}">
     <property file="build.properties" />
 
