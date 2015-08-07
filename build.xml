@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v1.0.0
+v1.0.1
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -118,7 +118,7 @@ https://github.com/treetop1500/S2PhingComponents
 
     <!-- SET-PERMISSIONS (Set file/directory permissions and ownership) -->
     <target name="set-permissions">
-        <if>
+        <If>
             <not>
                 <equals arg1="${buildType}" arg2="local" />
             </not>
@@ -128,7 +128,7 @@ https://github.com/treetop1500/S2PhingComponents
                 <exec command="sudo chown -R ${user}.${group} ${targetDir}" passthru="true" />
                 <exec command="sudo find ${targetDir} | xargs -0 chown -R ${user}.${group} \;" passthru="true" />
             </then>
-        </if>
+        </If>
         <!-- change permissions of all directories to 2775 -->
         <echo msg="change permissions of all directories to 2775" level="warning" />
         <exec command="sudo find ${targetDir} -type d -print0 | xargs -0 chmod 2775 \;" passthru="true" />
@@ -136,9 +136,27 @@ https://github.com/treetop1500/S2PhingComponents
         <echo msg="change permissions of all files to 0664" level="warning" />
         <exec command="sudo find ${targetDir} -type f -print0 | xargs -0 chmod 664 \;" passthru="true" />
 
-        <!-- For Symfony Sites: public_html/sites/default/files -->
+        <!-- For Symfony2 -->
         <echo msg="make writable: /var" level="warning" />
         <exec command="sudo find ${targetDir}/public_html/var -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
+
+        <echo msg="set symfony specific permissions for cache and log directories" level="warning" />
+        <exec command="HTTPDUSER=`ps aux | grep -E '[a]pache|[h]ttpd|[_]www|[w]ww-data|[n]ginx' | grep -v root | head -1 | cut -d\  -f1`" dir="${targetDir}/public_html" />
+        <If>
+            <equals arg1="${buildType}" arg2="local" />
+            <then>
+                <exec command='sudo chmod +a "$HTTPDUSER allow delete,write,append,file_inherit,directory_inherit" app/cache app/logs' dir="${targetDir}/public_html" />
+                <exec command='sudo chmod +a "`whoami` allow delete,write,append,file_inherit,directory_inherit" app/cache app/logs' dir="${targetDir}/public_html" />
+                <exec command='sudo chmod +a "$HTTPDUSER allow delete,write,append,file_inherit,directory_inherit" var/cache var/logs' dir="${targetDir}/public_html" />
+                <exec command='sudo chmod +a "`whoami` allow delete,write,append,file_inherit,directory_inherit" var/cache var/logs' dir="${targetDir}/public_html" />
+            </then>
+            <else>
+                <exec command='sudo setfacl -R -m u:"$HTTPDUSER":rwX -m u:`whoami`:rwX app/cache app/logs' dir="${targetDir}/public_html" />
+                <exec command='sudo setfacl -dR -m u:"$HTTPDUSER":rwX -m u:`whoami`:rwX app/cache app/logs' dir="${targetDir}/public_html" />
+                <exec command='sudo setfacl -R -m u:"$HTTPDUSER":rwX -m u:`whoami`:rwX var/cache var/logs' dir="${targetDir}/public_html" />
+                <exec command='sudo setfacl -dR -m u:"$HTTPDUSER":rwX -m u:`whoami`:rwX var/cache var/logs' dir="${targetDir}/public_html" />
+            </else>
+        </If>
 
         <echo msg="make writable: /web/uploads" level="warning" />
         <exec command="sudo find ${targetDir}/${project.web_root}/uploads -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
