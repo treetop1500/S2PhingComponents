@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v1.0.1
+v1.1.0
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -51,6 +51,7 @@ https://github.com/treetop1500/S2PhingComponents
         <phingcall target="config-setup" />
         <phingcall target="clear-cache" />
         <phingcall target="set-permissions" />
+        <phingcall target="set-store-permissions" />
         <phingcall target="compile-sass" />
         <phingcall target="exit-maintenance-mode" />
     </target>
@@ -71,6 +72,7 @@ https://github.com/treetop1500/S2PhingComponents
         <phingcall target="config-setup" />
         <phingcall target="clear-cache" />
         <phingcall target="set-permissions" />
+        <phingcall target="set-store-permissions" />
         <phingcall target="compile-sass" />
         <phingcall target="exit-maintenance-mode" />
     </target>
@@ -166,9 +168,28 @@ https://github.com/treetop1500/S2PhingComponents
 
         <echo msg="warm up the cache" level="warning" />
         <exec command="php ${targetDir}/${project.bin_dir}/console cache:warmup --no-debug" passthru="true" />
-
     </target>
 
+    <!-- SET-STORE PERMISSIONS (Set file/directory permissions and ownership for STORE Files) -->
+    <target name="set-store-permissions">
+        <If>
+            <equals arg1="${project.store_type}" arg2="cscart" />
+            <then>
+                <!-- For CS-Cart -->
+                <echo msg="make writable: /web/store/design" level="warning" />
+                <exec command="sudo find ${targetDir}/${project.web_root}/store/design -type d -print0 | xargs -0 chmod 2777" passthru="true" />
+                <exec command="sudo find ${targetDir}/${project.web_root}/store/design -type f -print0 | xargs -0 chmod 0666" passthru="true" />
+                <exec command="sudo find ${targetDir}/${project.web_root}/store/design -type f -name '.htaccess' -print0 | xargs -0 chmod 0664" passthru="true" />
+                <echo msg="make writable: /web/store/var" level="warning" />
+                <exec command="sudo find ${targetDir}/${project.web_root}/store/var -type d -print0 | xargs -0 chmod 2777" passthru="true" />
+                <exec command="sudo find ${targetDir}/${project.web_root}/store/var -type f -print0 | xargs -0 chmod 066" passthru="true" />
+                <exec command="sudo find ${targetDir}/${project.web_root}/store/var -type f -name '.htaccess' -print0 | xargs -0 chmod 0664" passthru="true" />
+                <echo msg="set cs-cart specific permissions for config.local.php" level="warning" />
+                <exec command="sudo chmod 0664 ${targetDir}/${project.web_root}/store/config.local.php" passthru="true" />
+            </then>
+        </If>
+    </target>
+    
     <!-- CLEAR-CACHE -->
     <target name="clear-cache" description="Clears various caches">
         <!-- Symfony: clear cache  -->
