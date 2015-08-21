@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v1.1.1
+v1.1.2
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -314,5 +314,6 @@ https://github.com/treetop1500/S2PhingComponents
                 </replaceregexp>
             </filterchain>
         </reflexive>
+        <phingcall target="clear-cache" />
     </target>
 </project>
