@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v1.1.0
+v1.1.1
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -166,8 +166,6 @@ https://github.com/treetop1500/S2PhingComponents
         <echo msg="make writable: /web/media" level="warning" />
         <exec command="sudo find ${targetDir}/${project.web_root}/media -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
 
-        <echo msg="warm up the cache" level="warning" />
-        <exec command="php ${targetDir}/${project.bin_dir}/console cache:warmup --no-debug" passthru="true" />
     </target>
 
     <!-- SET-STORE PERMISSIONS (Set file/directory permissions and ownership for STORE Files) -->
@@ -189,15 +187,13 @@ https://github.com/treetop1500/S2PhingComponents
             </then>
         </If>
     </target>
-    
+
     <!-- CLEAR-CACHE -->
     <target name="clear-cache" description="Clears various caches">
         <!-- Symfony: clear cache  -->
         <echo msg="clearing symfony cache" level="warning" />
-        <exec command="sudo rm -rf ${targetDir}/public_html/var/cache/*" passthru="true" />
-        <exec command="sudo rm -rf ${targetDir}/public_html/var/logs/*" passthru="true" />
-        <exec command="sudo rm -rf ${targetDir}/public_html/cache/logs/*" passthru="true" />
-        <exec command="sudo rm -rf ${targetDir}/${project.app_dir}/logs/*" passthru="true" />
+        <exec command="php bin/console cache:clear --env=prod --no-warmup" dir="${targetDir}/public_html" passthru="true" />
+        <exec command="php bin/console cache:clear --no-warmup" dir="${targetDir}/public_html" passthru="true" />
 
         <!-- clear varnish cache -->
         <If>
@@ -305,7 +301,6 @@ https://github.com/treetop1500/S2PhingComponents
                 </replaceregexp>
             </filterchain>
         </reflexive>
-        <phingcall target="clear-cache" />
     </target>
 
     <!-- Exit Maintenance Mode -->
@@ -319,6 +314,5 @@ https://github.com/treetop1500/S2PhingComponents
                 </replaceregexp>
             </filterchain>
         </reflexive>
-        <phingcall target="clear-cache" />
     </target>
 </project>
