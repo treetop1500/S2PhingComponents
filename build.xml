@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v1.1.2
+v1.1.3
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -143,7 +143,7 @@ https://github.com/treetop1500/S2PhingComponents
         <exec command="sudo find ${targetDir}/public_html/var -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
 
         <echo msg="set symfony specific permissions for cache and log directories" level="warning" />
-        <exec command="HTTPDUSER=`ps aux | grep -E '[a]pache|[h]ttpd|[_]www|[w]ww-data|[n]ginx' | grep -v root | head -1 | cut -d\  -f1`" dir="${targetDir}/public_html" />
+        <exec command="HTTPDUSER=`ps aux | grep -E '[a]pache|[h]ttpd|[_]www|[w]ww-data|[n]ginx|[n]obody' | grep -v root | head -1 | cut -d\  -f1`" dir="${targetDir}/public_html" />
         <If>
             <equals arg1="${buildType}" arg2="local" />
             <then>
