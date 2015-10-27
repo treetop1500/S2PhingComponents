@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v1.1.3
+v1.1.4
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -201,6 +201,18 @@ https://github.com/treetop1500/S2PhingComponents
             <then>
                 <echo msg="clearing varnish cache" level="warning" />
                 <exec command="sudo service varnish restart" passthru="true" />
+            </then>
+        </If>
+        <!-- clear the doctrine result and query caches -->
+        <If>
+            <equals arg1="${project.data_cache}" arg2="redis" />
+            <then>
+                <echo msg="clearing doctrine metadata cache from redis" level="warning" />
+                <exec command="php bin/console doctrine:cache:clear-metadata" dir="${targetDir}/public_html" passthru="true" />
+                <echo msg="clearing doctrine query cache from redis" level="warning" />
+                <exec command="php bin/console doctrine:cache:clear-query" dir="${targetDir}/public_html" passthru="true" />
+                <echo msg="clearing doctrine result cache from redis" level="warning" />
+                <exec command="php bin/console doctrine:cache:clear-result" dir="${targetDir}/public_html" passthru="true" />
             </then>
         </If>
     </target>
