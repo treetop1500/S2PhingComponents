@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v1.1.4
+v1.1.5
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -213,6 +213,14 @@ https://github.com/treetop1500/S2PhingComponents
                 <exec command="php bin/console doctrine:cache:clear-query" dir="${targetDir}/public_html" passthru="true" />
                 <echo msg="clearing doctrine result cache from redis" level="warning" />
                 <exec command="php bin/console doctrine:cache:clear-result" dir="${targetDir}/public_html" passthru="true" />
+            </then>
+        </If>
+        <!-- clear cscart cache -->
+        <If>
+            <equals arg1="${project.store_type}" arg2="cscart" />
+            <then>
+                <echo msg="clearing cscart cache" level="warning" />
+                <exec command="rm -Rf web/store/var/cache/*" dir="${targetDir}/public_html" passthru="true" />
             </then>
         </If>
     </target>
