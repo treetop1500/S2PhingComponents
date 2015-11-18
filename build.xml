@@ -128,19 +128,19 @@ https://github.com/treetop1500/S2PhingComponents
                 <!-- change owner & group of all files and directories -->
                 <echo msg="change owner.group of all files/directories inside of ${targetDir}" />
                 <exec command="sudo chown -R ${user}.${group} ${targetDir}" passthru="true" />
-                <exec command="sudo find ${targetDir} | xargs -0 chown -R ${user}.${group} \;" passthru="true" />
+                <exec command="sudo find ${targetDir} | xargs -0 chown -R ${user}.${group}" passthru="true" />
             </then>
         </If>
         <!-- change permissions of all directories to 2775 -->
         <echo msg="change permissions of all directories to 2775" level="warning" />
-        <exec command="sudo find ${targetDir} -type d -print0 | xargs -0 chmod 2775 \;" passthru="true" />
+        <exec command="sudo find ${targetDir} -type d -print0 | xargs -0 chmod 2775" passthru="true" />
         <!-- change permissions of all files to 0664 -->
         <echo msg="change permissions of all files to 0664" level="warning" />
-        <exec command="sudo find ${targetDir} -type f -print0 | xargs -0 chmod 664 \;" passthru="true" />
+        <exec command="sudo find ${targetDir} -type f -print0 | xargs -0 chmod 664" passthru="true" />
 
         <!-- For Symfony2 -->
         <echo msg="make writable: /var" level="warning" />
-        <exec command="sudo find ${targetDir}/public_html/var -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
+        <exec command="sudo find ${targetDir}/public_html/var -type d -print0 | xargs -0 chmod 2777" passthru="true" />
 
         <echo msg="set symfony specific permissions for cache and log directories" level="warning" />
         <exec command="HTTPDUSER=`ps aux | grep -E '[a]pache|[h]ttpd|[_]www|[w]ww-data|[n]ginx|[n]obody' | grep -v root | head -1 | cut -d\  -f1`" dir="${targetDir}/public_html" />
@@ -161,13 +161,13 @@ https://github.com/treetop1500/S2PhingComponents
         </If>
 
         <echo msg="make writable: /web/uploads" level="warning" />
-        <exec command="sudo find ${targetDir}/${project.web_root}/uploads -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
+        <exec command="sudo find ${targetDir}/${project.web_root}/uploads -type d -print0 | xargs -0 chmod 2777" passthru="true" />
 
         <echo msg="make writable: /web/media" level="warning" />
-        <exec command="sudo find ${targetDir}/${project.web_root}/media -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
+        <exec command="sudo find ${targetDir}/${project.web_root}/media -type d -print0 | xargs -0 chmod 2777" passthru="true" />
 
         <echo msg="make log files writable: /public_html/var/logs" level="warning" />
-        <exec command="sudo find ${targetDir}/public_html/var/logs -type f -print0 | xargs -0 chmod 777 \;" passthru="true" />
+        <exec command="sudo find ${targetDir}/public_html/var/logs -type f -print0 | xargs -0 chmod 777" passthru="true" />
     </target>
 
     <!-- SET-STORE PERMISSIONS (Set file/directory permissions and ownership for STORE Files) -->
