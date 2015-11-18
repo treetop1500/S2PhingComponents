@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v1.1.5
+v1.1.6
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -166,6 +166,8 @@ https://github.com/treetop1500/S2PhingComponents
         <echo msg="make writable: /web/media" level="warning" />
         <exec command="sudo find ${targetDir}/${project.web_root}/media -type d -print0 | xargs -0 chmod 2777 \;" passthru="true" />
 
+        <echo msg="make log files writable: /public_html/var/logs" level="warning" />
+        <exec command="sudo find ${targetDir}/public_html/var/logs -type f -print0 | xargs -0 chmod 777 \;" passthru="true" />
     </target>
 
     <!-- SET-STORE PERMISSIONS (Set file/directory permissions and ownership for STORE Files) -->
