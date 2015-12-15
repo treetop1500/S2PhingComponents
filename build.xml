@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v1.1.6
+v1.2.0
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -32,6 +32,7 @@ https://github.com/treetop1500/S2PhingComponents
         <phingcall target="clear-cache" />
         <phingcall target="set-permissions" />
         <phingcall target="compile-sass" />
+        <phingcall target="compile-js" />
         <phingcall target="exit-maintenance-mode" />
     </target>
 
@@ -53,6 +54,7 @@ https://github.com/treetop1500/S2PhingComponents
         <phingcall target="set-permissions" />
         <phingcall target="set-store-permissions" />
         <phingcall target="compile-sass" />
+        <phingcall target="compile-js" />
         <phingcall target="exit-maintenance-mode" />
     </target>
 
@@ -74,6 +76,7 @@ https://github.com/treetop1500/S2PhingComponents
         <phingcall target="set-permissions" />
         <phingcall target="set-store-permissions" />
         <phingcall target="compile-sass" />
+        <phingcall target="compile-js" />
         <phingcall target="exit-maintenance-mode" />
     </target>
 
@@ -233,6 +236,7 @@ https://github.com/treetop1500/S2PhingComponents
         <exec command="composer install -o" dir="public_html" />
     </target>
 
+    <!-- Compile CSS -->
     <target name="compile-sass" description="Compiles CSS from SASS/SCSS files.">
         <If>
             <equals arg1="${project.sass_compiler}" arg2="gulp" />
@@ -246,6 +250,21 @@ https://github.com/treetop1500/S2PhingComponents
                 <echo msg="Compiling SASS files with Compass" level="warning" />
                 <exec command="compass clean" dir="${targetDir}/${project.web_root}" passthru="true" />
                 <exec command="bundle exec compass compile -e production" dir="${targetDir}/${project.web_root}" passthru="true" />
+            </else>
+        </If>
+    </target>
+
+    <!-- Compile JS -->
+    <target name="compile-js" description="Compiles JS files.">
+        <If>
+            <equals arg1="${project.js_compiler}" arg2="gulp" />
+            <then>
+                <!-- Compile JS with Gulp -->
+                <echo msg="Compiling JS files with Gulp" level="warning" />
+                <exec command="gulp scripts" dir="${targetDir}/${project.web_root}" passthru="true" />
+            </then>
+            <else>
+                <echo msg="No JS to compile in this project." level="warning" />
             </else>
         </If>
     </target>
