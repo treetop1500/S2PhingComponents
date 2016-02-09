@@ -2,7 +2,7 @@
 
 <!-- ###########################################
 S2PhingComponents build.xml
-v2.0.0
+v2.0.1
 Author: rwade@grayloon.com
 https://github.com/treetop1500/S2PhingComponents
 ################################################ -->
@@ -137,9 +137,19 @@ https://github.com/treetop1500/S2PhingComponents
         <!-- change permissions of all directories to 2775 -->
         <echo msg="change permissions of all directories to 2775" level="warning" />
         <exec command="sudo find ${targetDir} -type d -print0 | xargs -0 chmod 2775" passthru="true" />
+
         <!-- change permissions of all files to 0664 -->
         <echo msg="change permissions of all files to 0664" level="warning" />
         <exec command="sudo find ${targetDir} -type f -print0 | xargs -0 chmod 664" passthru="true" />
+
+        <!-- Make shell scripts writable -->
+        <If>
+        <equals arg1="${project.perm775files}" arg2="none" />
+            <else>
+                <echo msg="Make certain files owner/group writable" level="warning" />
+                <foreach list="${project.perm775files}" delimiter="," param="filepath" target="perm775" />
+            </else>
+        </If>
 
         <!-- For Symfony2 -->
         <echo msg="make writable: /var" level="warning" />
@@ -172,6 +182,13 @@ https://github.com/treetop1500/S2PhingComponents
         <echo msg="make log files writable: /public_html/var/logs" level="warning" />
         <exec command="sudo find ${targetDir}/public_html/var/logs -type f -print0 | xargs -0 chmod 777" passthru="true" />
     </target>
+
+    <target name="perm775">
+        <echo msg="  ${filepath} 775" level="warning" />
+        <exec command="sudo chmod 775 ${targetDir}/public_html/${filepath}" />
+    </target>
+
+
 
     <!-- SET-STORE PERMISSIONS (Set file/directory permissions and ownership for STORE Files) -->
     <target name="set-store-permissions">
